@@ -1,0 +1,10 @@
+version = 1
+
+# Blanket annotation so `reuse lint` stays green as the app is carved in.
+# Per-file SPDX headers (added with `reuse annotate` during the carve) take
+# precedence where present.
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Bart van de Lint <bart@vandelint.net>"
+SPDX-License-Identifier = "AGPL-3.0-only"

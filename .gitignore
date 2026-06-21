@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 Bart van de Lint <bart@vandelint.net>
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Secrets
+.env
+*.local
+
+# Build artifacts
+/bin/
+*.test
+frontend/dist
+frontend/node_modules
+node_modules
+
+# Go workspace (local-only; lives in the hosted repo during staging)
+go.work
+go.work.sum
+/vendor/
