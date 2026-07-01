@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Bart van de Lint <bart@vandelint.net>
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# pnpm settings (pnpm v11 moved these out of package.json's "pnpm" field).
+# Allow the native-binary build scripts vite/tailwind need; pnpm blocks all
+# dependency build scripts by default.
+allowBuilds:
+  esbuild: true
+  "@tailwindcss/oxide": true

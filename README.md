@@ -15,7 +15,33 @@ Bring your own provider key (Groq, DeepSeek, or any OpenAI-compatible / self-hos
 endpoint), run the binary, and chat. The flow behind each answer is fully editable
 and shareable.
 
-Built on [openfastchat-core](https://github.com/1-Bart-1/openfastchat-core).
+## Architecture
+
+This is the **self-host wrapper**: a thin app over the open core. It shares the
+engine and UI with the managed service; the two are siblings over core, not
+layered on each other.
+
+- **Engine + UI** — [`openfastchat-core`](https://github.com/1-Bart-1/openfastchat-core):
+  the Go flow engine (`github.com/1-Bart-1/openfastchat-core`) and the React
+  building blocks (`@openfastchat/ui`).
+- **This repo** — basic auth, thread/flow/provider storage, a BYOK provider
+  config, an **unbilled** LLM client, and a thin frontend shell that composes
+  `@openfastchat/ui`. No Stripe, no multi-tenant abuse controls.
+- **Managed service** — a separate private wrapper adds billing, rate/abuse
+  limits, and the marketplace business on top of the same core.
+
+## Local development
+
+The frontend consumes the shared UI from the core repo via pnpm. During local
+staging (both repos checked out side by side) it resolves to the working copy:
+
+```jsonc
+// frontend/package.json
+"@openfastchat/ui": "link:../../openfastchat-core/frontend"
+```
+
+It swaps to a published version once the repos are open-sourced — no code churn
+at release time.
 
 ## License
 
