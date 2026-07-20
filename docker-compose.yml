@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 Bart van de Lint <bart@vandelint.net>
+# SPDX-License-Identifier: AGPL-3.0-only
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: openfastchat
+      POSTGRES_PASSWORD: openfastchat
+      POSTGRES_DB: openfastchat
+    ports:
+      - "5432:5432"
+    volumes:
+      - ofc_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openfastchat"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ofc_pgdata:
