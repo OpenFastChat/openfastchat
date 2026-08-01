@@ -9,7 +9,7 @@ Self-hostable, **bring-your-own-key** AI chat where the conversation itself is a
 editable, shareable flow — not a separate app you have to build first. AGPL-3.0-only.
 
 > **Don't want to self-host?** A managed cloud version is available at
-> **https://openfastchat.com** _(domain placeholder — confirm before publishing)_.
+> **https://openfast.chat**
 
 Bring your own provider key (Groq, DeepSeek, or any OpenAI-compatible / self-hosted
 endpoint), run the binary, and chat. The flow behind each answer is fully editable
@@ -29,6 +29,27 @@ layered on each other.
   `@openfastchat/ui`. No Stripe, no multi-tenant abuse controls.
 - **Managed service** — a separate private wrapper adds billing, rate/abuse
   limits, and the marketplace business on top of the same core.
+
+## Quick start
+
+Needs Docker (for Postgres+pgvector), Go, and pnpm. Then:
+
+```bash
+cp .env.example .env      # set OFC_GROQ_API_KEY (your provider key)
+make run                  # start Postgres, build the UI + binary, serve :8080
+```
+
+Open http://127.0.0.1:8080. `make run` builds the frontend into `frontend/dist`,
+which the binary serves alongside the API — no separate frontend server.
+
+To install the binary onto your PATH (AUR-ready):
+
+```bash
+make install              # → /usr/local/bin/openfastchat (override with PREFIX=)
+```
+
+Other targets: `make dev` (Vite dev server + live backend), `make db-up`
+(Postgres only), `make build` (compile without running), `make uninstall`.
 
 ## Local development
 

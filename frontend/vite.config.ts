@@ -15,6 +15,18 @@ export default defineConfig({
     }),
   ],
   envDir: "..",
+  resolve: {
+    // @openfastchat/ui is a linked package with its own node_modules, so
+    // without this Vite bundles a second copy of these singletons. Two copies
+    // of react-query means two Contexts: the app's QueryClientProvider can't
+    // reach the useQuery calls inside ChatShell ("No QueryClient set").
+    dedupe: [
+      "react",
+      "react-dom",
+      "react-router-dom",
+      "@tanstack/react-query",
+    ],
+  },
   server: {
     proxy: {
       "/api": "http://localhost:8080",

@@ -1,3 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 @import "@openfastchat/ui/styles.css";
+
+/* @openfastchat/ui ships as source, and Tailwind v4 skips node_modules when
+   auto-detecting content. Without this the ChatShell's utility classes (esp.
+   the md:/lg: responsive variants) are never generated and the desktop layout
+   collapses to the mobile fallback. */
+@source "../../../openfastchat-core/frontend/src";
