@@ -10,6 +10,7 @@ import {
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { showNotice, errorStatus, errorMessage } from "@openfastchat/ui";
 import { ChatPage } from "./pages/ChatPage";
+import { AdminPage } from "./pages/AdminPage";
 
 // Surface only genuine server faults; client-side 4xx are handled inline
 // by the components that make the request.
@@ -36,6 +37,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<ChatPage />} />
           <Route path="/flow/:id" element={<ChatPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

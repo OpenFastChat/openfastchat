@@ -3,6 +3,7 @@
 
 import { ChatShell, type ShellUser } from "@openfastchat/ui";
 import { useMe } from "../hooks/useMe";
+import { AdminMenu } from "../components/AdminMenu";
 
 /**
  * Self-host chat page: the core ChatShell with none of the hosted
@@ -24,6 +25,7 @@ export function ChatPage() {
       user={user}
       brand="OpenFastChat"
       statusEmail={data?.email ?? "self-host"}
+      headerActions={data?.is_admin ? <AdminMenu /> : undefined}
     />
   );
 }

@@ -35,12 +35,14 @@ layered on each other.
 Needs Docker (for Postgres+pgvector), Go, and pnpm. Then:
 
 ```bash
-cp .env.example .env      # set OFC_GROQ_API_KEY (your provider key)
+cp .env.example .env      # defaults work out of the box; edit for production
 make run                  # start Postgres, build the UI + binary, serve :8080
 ```
 
-Open http://127.0.0.1:8080. `make run` builds the frontend into `frontend/dist`,
-which the binary serves alongside the API — no separate frontend server.
+Open http://127.0.0.1:8080, then add a provider key at `/admin` (any
+OpenAI-compatible endpoint's base URL + key) and start chatting. `make run`
+builds the frontend into `frontend/dist`, which the binary serves alongside the
+API — no separate frontend server.
 
 To install the binary onto your PATH (AUR-ready):
 

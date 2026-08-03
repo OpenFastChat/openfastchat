@@ -10,6 +10,7 @@ export interface Me {
   default_flow_id: string | null;
   is_template?: boolean;
   email?: string;
+  is_admin?: boolean;
 }
 
 export function useMe() {

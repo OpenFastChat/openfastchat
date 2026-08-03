@@ -17,6 +17,7 @@ import (
 	"github.com/1-Bart-1/openfastchat/backend/nobilling"
 
 	"github.com/1-Bart-1/openfastchat-core/coreconfig"
+	"github.com/1-Bart-1/openfastchat-core/crypto"
 	corehandler "github.com/1-Bart-1/openfastchat-core/handler"
 	"github.com/1-Bart-1/openfastchat-core/middleware"
 	"github.com/1-Bart-1/openfastchat-core/store"
@@ -37,7 +38,20 @@ func main() {
 		slog.Error("OFC_DATABASE_URL (or DATABASE_URL) is required")
 		os.Exit(1)
 	}
-	jwtSecret := env("OFC_JWT_SECRET", env("JWT_SECRET", "openfastchat-self-host-dev-secret"))
+	jwtSecret := env("OFC_JWT_SECRET", os.Getenv("JWT_SECRET"))
+	if jwtSecret == "" {
+		generated, err := crypto.GenerateKey()
+		if err != nil {
+			slog.Error("generate jwt secret", "err", err)
+			os.Exit(1)
+		}
+		jwtSecret = generated
+		slog.Warn(
+			"OFC_JWT_SECRET not set — generated an ephemeral secret. "+
+				"Persist it to keep sessions valid across restarts.",
+			"OFC_JWT_SECRET", jwtSecret,
+		)
+	}
 
 	pool, err := pgxpool.New(context.Background(), dbURL)
 	if err != nil {
@@ -54,8 +68,6 @@ func main() {
 	// unless the operator terminates TLS in front.
 	middleware.SetCookieSecure(strings.HasPrefix(env("OFC_BASE_URL", ""), "https://"))
 
-	coreconfig.SetActiveProviders(envProviders())
-
 	storeQ := store.New(pool)
 	hcfg := coreconfig.HandlerConfig{
 		BraveAPIKey:        os.Getenv("OFC_BRAVE_API_KEY"),
@@ -64,6 +76,30 @@ func main() {
 		MaxUploadSizeBytes: coreconfig.DefaultMaxUploadSizeBytes,
 	}
 	billing := nobilling.New()
+
+	// Providers live encrypted in the DB and are managed at runtime via
+	// /admin — nothing comes from the environment. The one env secret is
+	// the master key that decrypts them; an ephemeral fallback keeps a
+	// fresh install working but drops stored keys on restart.
+	box, generatedKey, err := crypto.LoadOrGenerate(env("OFC_PROVIDER_ENCRYPTION_KEY", ""))
+	if err != nil {
+		slog.Error("provider encryption key invalid", "err", err)
+		os.Exit(1)
+	}
+	if generatedKey != "" {
+		slog.Warn(
+			"OFC_PROVIDER_ENCRYPTION_KEY not set — generated an ephemeral key. "+
+				"Persist it to keep stored provider keys across restarts.",
+			"OFC_PROVIDER_ENCRYPTION_KEY", generatedKey,
+		)
+	}
+	providerManager := corehandler.NewProviderManager(storeQ, box, nil)
+	if err := providerManager.Reload(context.Background()); err != nil {
+		slog.Warn("provider reload at startup failed", "err", err)
+	}
+	providerManager.StartModelRefresh(context.Background())
+
+	providerAdmin := corehandler.NewProviderAdmin(storeQ, box, providerManager, nil)
 
 	chatHandler := corehandler.NewChatHandler(storeQ, pool, hcfg)
 	uploadHandler := corehandler.NewUploadHandler(storeQ)
@@ -82,6 +118,15 @@ func main() {
 	r.Get("/api/models", corehandler.ModelsHandler)
 	r.Get("/api/welcome", corehandler.WelcomeMessages)
 
+	// Admin: DB-backed provider config. Self-host is single-user and that
+	// user is the admin by definition, so there is no gate — the operator
+	// keeps a public instance behind their own network/proxy auth, exactly
+	// as they must to protect the provider keys and API credit themselves.
+	r.Get("/api/admin/providers", providerAdmin.List)
+	r.Post("/api/admin/providers", providerAdmin.Create)
+	r.Put("/api/admin/providers/{id}", providerAdmin.Update)
+	r.Delete("/api/admin/providers/{id}", providerAdmin.Delete)
+
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.OptionalUser(jwtSecret))
 		r.Get("/api/me", meHandler(storeQ))
@@ -92,8 +137,9 @@ func main() {
 	})
 
 	r.Group(func(r chi.Router) {
-		// Open self-host: anyone gets a user on first write, no captcha/caps.
-		r.Use(middleware.EnsureUser(jwtSecret, storeQ, corehandler.ProvisionGuestUser, nil, nil))
+		// Single-user self-host: every session resolves to the one owner
+		// account (created on first write), no captcha/caps.
+		r.Use(middleware.EnsureUser(jwtSecret, storeQ, provisionSingleUser, nil, nil))
 		r.Post("/api/issues", issuesHandler.Report)
 		r.Post("/api/auth/logout", accountHandler.Logout)
 		r.Post("/api/auth/delete-account", accountHandler.DeleteAccount)
@@ -135,20 +181,21 @@ func main() {
 }
 
 // meHandler returns the self-host identity for the current session, or an
-// anonymous stub. No billing, subscription, or admin fields.
+// anonymous stub. Self-host is single-user, so the session is always the
+// admin — is_admin is unconditionally true so the frontend reveals /admin.
 func meHandler(storeQ *store.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		uidStr, email, ok := middleware.UserFromContext(r.Context())
 		if !ok {
 			corehandler.WriteJSON(w, http.StatusOK, map[string]any{
-				"is_anonymous": true, "is_guest": true,
+				"is_anonymous": true, "is_guest": true, "is_admin": true,
 			})
 			return
 		}
 		uid, err := uuid.Parse(uidStr)
 		if err != nil {
 			corehandler.WriteJSON(w, http.StatusOK, map[string]any{
-				"is_anonymous": true, "is_guest": true,
+				"is_anonymous": true, "is_guest": true, "is_admin": true,
 			})
 			return
 		}
@@ -165,6 +212,7 @@ func meHandler(storeQ *store.Queries) http.HandlerFunc {
 			"display_name":    user.DisplayName,
 			"default_flow_id": corehandler.UUIDPtr(user.DefaultFlowID),
 			"is_template":     false,
+			"is_admin":        true,
 		})
 	}
 }
@@ -188,22 +236,4 @@ func env(key, def string) string {
 		return v
 	}
 	return def
-}
-
-// envProviders builds the active provider list from bring-your-own-key env
-// vars: Groq by default, plus DeepSeek when its key is present.
-func envProviders() []coreconfig.ProviderConfig {
-	provs := []coreconfig.ProviderConfig{{
-		Name:    "groq",
-		BaseURL: env("OFC_GROQ_BASE_URL", "https://api.groq.com/openai/v1"),
-		APIKey:  env("OFC_GROQ_API_KEY", os.Getenv("GROQ_API_KEY")),
-	}}
-	if key := os.Getenv("OFC_DEEPSEEK_API_KEY"); key != "" {
-		provs = append(provs, coreconfig.ProviderConfig{
-			Name:    "deepseek",
-			BaseURL: env("OFC_DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
-			APIKey:  key,
-		})
-	}
-	return provs
 }
