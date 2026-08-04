@@ -10,10 +10,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/1-Bart-1/openfastchat-core/coreconfig"
-	"github.com/1-Bart-1/openfastchat-core/flowengine"
-	corehandler "github.com/1-Bart-1/openfastchat-core/handler"
-	"github.com/1-Bart-1/openfastchat-core/llmclient"
+	"github.com/openfastchat/openfastchat-core/coreconfig"
+	"github.com/openfastchat/openfastchat-core/flowengine"
+	corehandler "github.com/openfastchat/openfastchat-core/handler"
+	"github.com/openfastchat/openfastchat-core/llmclient"
 
 	"github.com/google/uuid"
 )

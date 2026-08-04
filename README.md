@@ -21,8 +21,8 @@ This is the **self-host wrapper**: a thin app over the open core. It shares the
 engine and UI with the managed service; the two are siblings over core, not
 layered on each other.
 
-- **Engine + UI** — [`openfastchat-core`](https://github.com/1-Bart-1/openfastchat-core):
-  the Go flow engine (`github.com/1-Bart-1/openfastchat-core`) and the React
+- **Engine + UI** — [`openfastchat-core`](https://github.com/openfastchat/openfastchat-core):
+  the Go flow engine (`github.com/openfastchat/openfastchat-core`) and the React
   building blocks (`@openfastchat/ui`).
 - **This repo** — basic auth, thread/flow/provider storage, a BYOK provider
   config, an **unbilled** LLM client, and a thin frontend shell that composes

@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Bart van de Lint <bart@vandelint.net>
 // SPDX-License-Identifier: AGPL-3.0-only
 
-module github.com/1-Bart-1/openfastchat
+module github.com/openfastchat/openfastchat
 
 go 1.26.1
 
 require (
-	github.com/1-Bart-1/openfastchat-core v0.0.0
+	github.com/openfastchat/openfastchat-core v0.0.0
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
@@ -28,4 +28,4 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 )
 
-replace github.com/1-Bart-1/openfastchat-core => ../openfastchat-core
+replace github.com/openfastchat/openfastchat-core => ../openfastchat-core

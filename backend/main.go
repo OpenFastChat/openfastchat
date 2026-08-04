@@ -14,13 +14,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/1-Bart-1/openfastchat/backend/nobilling"
+	"github.com/openfastchat/openfastchat/backend/nobilling"
 
-	"github.com/1-Bart-1/openfastchat-core/coreconfig"
-	"github.com/1-Bart-1/openfastchat-core/crypto"
-	corehandler "github.com/1-Bart-1/openfastchat-core/handler"
-	"github.com/1-Bart-1/openfastchat-core/middleware"
-	"github.com/1-Bart-1/openfastchat-core/store"
+	"github.com/openfastchat/openfastchat-core/coreconfig"
+	"github.com/openfastchat/openfastchat-core/crypto"
+	corehandler "github.com/openfastchat/openfastchat-core/handler"
+	"github.com/openfastchat/openfastchat-core/middleware"
+	"github.com/openfastchat/openfastchat-core/store"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
