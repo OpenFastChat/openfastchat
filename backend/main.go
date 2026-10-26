@@ -71,7 +71,7 @@ func main() {
 	storeQ := store.New(pool)
 	hcfg := coreconfig.HandlerConfig{
 		BraveAPIKey:        os.Getenv("OFC_BRAVE_API_KEY"),
-		CompactModel:       env("OFC_COMPACT_MODEL", "llama-3.1-8b-instant"),
+		CompactModel:       env("OFC_COMPACT_MODEL", "openai/gpt-oss-20b"),
 		TrustForwardedIP:   os.Getenv("OFC_TRUST_FORWARDED_IP") == "true",
 		MaxUploadSizeBytes: coreconfig.DefaultMaxUploadSizeBytes,
 	}
