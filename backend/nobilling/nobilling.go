@@ -33,11 +33,11 @@ func (Billing) Preflight(
 
 type exec struct{}
 
-func (exec) Begin(_, _ uuid.UUID) flowengine.LLMClient           { return unbilledLLM{} }
-func (exec) SearchCharged() func(context.Context, string, int)   { return nil }
-func (exec) PromptCap() float64                                  { return 0 }
-func (exec) Guest() (used, limit int32, ok bool)                 { return 0, 0, false }
-func (exec) Settle(context.Context) float64                      { return 0 }
+func (exec) Begin(_, _ uuid.UUID) flowengine.LLMClient         { return unbilledLLM{} }
+func (exec) SearchCharged() func(context.Context, string, int) { return nil }
+func (exec) PromptCap() float64                                { return 0 }
+func (exec) Guest() (used, limit int32, ok bool)               { return 0, 0, false }
+func (exec) Settle(context.Context) float64                    { return 0 }
 
 // unbilledLLM runs completions on the active provider without recording usage.
 type unbilledLLM struct{}

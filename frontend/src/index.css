@@ -6,4 +6,4 @@
    auto-detecting content. Without this the ChatShell's utility classes (esp.
    the md:/lg: responsive variants) are never generated and the desktop layout
    collapses to the mobile fallback. */
-@source "../../../openfastchat-core/frontend/src";
+@source "../node_modules/@openfastchat/ui/src";

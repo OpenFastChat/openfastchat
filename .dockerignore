@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 Bart van de Lint <bart@vandelint.net>
+# SPDX-License-Identifier: AGPL-3.0-only
+
+.git
+.env
+bin
+frontend/node_modules
+backend/web/dist

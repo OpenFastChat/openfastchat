@@ -6,11 +6,11 @@ module github.com/openfastchat/openfastchat
 go 1.26.1
 
 require (
-	github.com/openfastchat/openfastchat-core v0.0.0
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
+	github.com/openfastchat/openfastchat-core v0.2.3
 )
 
 require (
@@ -27,5 +27,3 @@ require (
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 )
-
-replace github.com/openfastchat/openfastchat-core => ../openfastchat-core
