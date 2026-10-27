@@ -16,9 +16,12 @@ RUN go mod download
 COPY backend/ backend/
 COPY --from=frontend /src/backend/web/dist backend/web/dist
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /openfastchat ./backend
+RUN mkdir /data
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=backend /openfastchat /openfastchat
+# Owned by nonroot so a fresh named volume mounted here is writable.
+COPY --from=backend --chown=nonroot:nonroot /data /data
 ENV LISTEN_ADDR=0.0.0.0:8080 OFC_DATA_DIR=/data
 VOLUME /data
 EXPOSE 8080

@@ -16,6 +16,9 @@ services:
         required: false
     ports:
       - "127.0.0.1:8080:8080"
+    # Lets the app reach a provider on the host, e.g. Ollama on :11434.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ofc_data:/data
     restart: unless-stopped

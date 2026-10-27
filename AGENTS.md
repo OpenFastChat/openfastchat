@@ -10,6 +10,8 @@ workspace — see `../AGENTS.md` for the three-repo layout and cross-repo wiring
 
 - Thin app over `openfastchat-core`: basic auth, storage, BYOK providers, an
   unbilled LLM client (`backend/nobilling/`), a shell over `@openfastchat/ui`.
-- `backend/main.go` serves the API + `frontend/dist` from one binary; `make run`.
-- Build gotcha: `@openfastchat/ui` is linked source, so `vite.config.ts` dedupes
-  singletons and `src/index.css` has `@source` for the core UI. Don't drop them.
+- `backend/main.go` serves the API + the UI embedded from `backend/web/dist`
+  (the Vite build output) as one binary; `make run` or `docker compose up -d`.
+- Depends on published core (`go.mod`) and `@openfastchat/ui` (npm). The UI
+  ships as source, so `vite.config.ts` dedupes singletons and `src/index.css`
+  has `@source` for it. Don't drop them.

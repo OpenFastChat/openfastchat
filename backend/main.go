@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/openfastchat/openfastchat/backend/nobilling"
 	"github.com/openfastchat/openfastchat/backend/web"
@@ -166,7 +167,15 @@ func main() {
 
 	addr := env("LISTEN_ADDR", "127.0.0.1:8080")
 	slog.Info("openfastchat self-host starting", "addr", addr)
-	if err := http.ListenAndServe(addr, r); err != nil {
+	// No WriteTimeout: flow responses stream for as long as the LLM runs.
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       2 * time.Minute,
+		IdleTimeout:       2 * time.Minute,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		slog.Error("server", "err", err)
 		os.Exit(1)
 	}
