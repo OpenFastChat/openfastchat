@@ -8,7 +8,7 @@
 # Build artifacts
 /bin/
 *.test
-frontend/dist
+backend/web/dist
 frontend/node_modules
 node_modules
 

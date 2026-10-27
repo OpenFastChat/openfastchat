@@ -2,6 +2,24 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 services:
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      OFC_DATABASE_URL: postgres://openfastchat:openfastchat@db:5432/openfastchat?sslmode=disable
+      LISTEN_ADDR: 0.0.0.0:8080
+      OFC_DATA_DIR: /data
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ofc_data:/data
+    restart: unless-stopped
+
   db:
     image: pgvector/pgvector:pg16
     environment:
@@ -9,7 +27,7 @@ services:
       POSTGRES_PASSWORD: openfastchat
       POSTGRES_DB: openfastchat
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - ofc_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -17,6 +35,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
 volumes:
+  ofc_data:
   ofc_pgdata:

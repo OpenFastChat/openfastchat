@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: 2026 Bart van de Lint <bart@vandelint.net>
+# SPDX-License-Identifier: AGPL-3.0-only
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build frontend
+        run: |
+          corepack enable
+          pnpm -C frontend install --frozen-lockfile
+          pnpm -C frontend build
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Vet and build
+        run: |
+          test -z "$(gofmt -l backend)"
+          go vet ./...
+          CGO_ENABLED=0 go build -o bin/openfastchat ./backend
+
+      - name: REUSE
+        uses: fsfe/reuse-action@v5
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t openfastchat .

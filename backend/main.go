@@ -8,13 +8,15 @@ package main
 
 import (
 	"context"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/openfastchat/openfastchat/backend/nobilling"
+	"github.com/openfastchat/openfastchat/backend/web"
 
 	"github.com/openfastchat/openfastchat-core/coreconfig"
 	"github.com/openfastchat/openfastchat-core/crypto"
@@ -38,19 +40,11 @@ func main() {
 		slog.Error("OFC_DATABASE_URL (or DATABASE_URL) is required")
 		os.Exit(1)
 	}
-	jwtSecret := env("OFC_JWT_SECRET", os.Getenv("JWT_SECRET"))
-	if jwtSecret == "" {
-		generated, err := crypto.GenerateKey()
-		if err != nil {
-			slog.Error("generate jwt secret", "err", err)
-			os.Exit(1)
-		}
-		jwtSecret = generated
-		slog.Warn(
-			"OFC_JWT_SECRET not set — generated an ephemeral secret. "+
-				"Persist it to keep sessions valid across restarts.",
-			"OFC_JWT_SECRET", jwtSecret,
-		)
+	dataDir := env("OFC_DATA_DIR", defaultDataDir())
+	jwtSecret, err := loadSecret(dataDir, "jwt_secret", "OFC_JWT_SECRET", "JWT_SECRET")
+	if err != nil {
+		slog.Error("jwt secret", "err", err)
+		os.Exit(1)
 	}
 
 	pool, err := pgxpool.New(context.Background(), dbURL)
@@ -78,20 +72,18 @@ func main() {
 	billing := nobilling.New()
 
 	// Providers live encrypted in the DB and are managed at runtime via
-	// /admin — nothing comes from the environment. The one env secret is
-	// the master key that decrypts them; an ephemeral fallback keeps a
-	// fresh install working but drops stored keys on restart.
-	box, generatedKey, err := crypto.LoadOrGenerate(env("OFC_PROVIDER_ENCRYPTION_KEY", ""))
+	// /admin — nothing comes from the environment but the master key.
+	encryptionKey, err := loadSecret(
+		dataDir, "provider_encryption_key", "OFC_PROVIDER_ENCRYPTION_KEY",
+	)
+	if err != nil {
+		slog.Error("provider encryption key", "err", err)
+		os.Exit(1)
+	}
+	box, err := crypto.New(encryptionKey)
 	if err != nil {
 		slog.Error("provider encryption key invalid", "err", err)
 		os.Exit(1)
-	}
-	if generatedKey != "" {
-		slog.Warn(
-			"OFC_PROVIDER_ENCRYPTION_KEY not set — generated an ephemeral key. "+
-				"Persist it to keep stored provider keys across restarts.",
-			"OFC_PROVIDER_ENCRYPTION_KEY", generatedKey,
-		)
 	}
 	providerManager := corehandler.NewProviderManager(storeQ, box, nil)
 	if err := providerManager.Reload(context.Background()); err != nil {
@@ -170,7 +162,7 @@ func main() {
 		r.Put("/api/marketplace/flows/{id}/vote", marketplaceHandler.Vote)
 	})
 
-	r.Handle("/*", spaHandler(env("OFC_FRONTEND_DIR", "frontend/dist")))
+	r.Handle("/*", spaHandler(web.Dist()))
 
 	addr := env("LISTEN_ADDR", "127.0.0.1:8080")
 	slog.Info("openfastchat self-host starting", "addr", addr)
@@ -217,17 +209,17 @@ func meHandler(storeQ *store.Queries) http.HandlerFunc {
 	}
 }
 
-// spaHandler serves static files from dir, falling back to index.html so the
+// spaHandler serves the built frontend, falling back to index.html so the
 // client-side router owns unknown paths.
-func spaHandler(dir string) http.HandlerFunc {
-	fs := http.FileServer(http.Dir(dir))
+func spaHandler(dist fs.FS) http.HandlerFunc {
+	files := http.FileServerFS(dist)
 	return func(w http.ResponseWriter, r *http.Request) {
-		p := filepath.Join(dir, filepath.Clean(r.URL.Path))
-		if info, err := os.Stat(p); err == nil && !info.IsDir() {
-			fs.ServeHTTP(w, r)
+		name := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
+		if info, err := fs.Stat(dist, name); err == nil && !info.IsDir() {
+			files.ServeHTTP(w, r)
 			return
 		}
-		http.ServeFile(w, r, filepath.Join(dir, "index.html"))
+		http.ServeFileFS(w, r, dist, "index.html")
 	}
 }
 

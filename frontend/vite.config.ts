@@ -15,9 +15,15 @@ export default defineConfig({
     }),
   ],
   envDir: "..",
+  build: {
+    // Embedded into the Go binary by backend/web.
+    outDir: "../backend/web/dist",
+    emptyOutDir: true,
+  },
   resolve: {
-    // @openfastchat/ui is a linked package with its own node_modules, so
-    // without this Vite bundles a second copy of these singletons. Two copies
+    // @openfastchat/ui keeps its own node_modules (pnpm store, or the core
+    // checkout when linked), so without this Vite bundles a second copy of
+    // these singletons. Two copies
     // of react-query means two Contexts: the app's QueryClientProvider can't
     // reach the useQuery calls inside ChatShell ("No QueryClient set").
     dedupe: [
@@ -32,8 +38,8 @@ export default defineConfig({
       "/api": "http://localhost:8080",
     },
     fs: {
-      // Allow the linked @openfastchat/ui to read its ?raw assets
-      // (e.g. compact/prompt.md) from the sibling core repo in dev.
+      // A linked @openfastchat/ui (core development) reads its ?raw assets
+      // from the sibling core checkout.
       allow: ["../.."],
     },
   },
