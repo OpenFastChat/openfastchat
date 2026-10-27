@@ -19,10 +19,11 @@ jobs:
           node-version: 22
 
       - name: Build frontend
+        working-directory: frontend
         run: |
           corepack enable
-          pnpm -C frontend install --frozen-lockfile
-          pnpm -C frontend build
+          pnpm install --frozen-lockfile
+          pnpm build
 
       - uses: actions/setup-go@v5
         with:
